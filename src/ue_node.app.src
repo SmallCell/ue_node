@@ -1,0 +1,12 @@
+{application, ue_node,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { ue_node, []}},
+  {env, []}
+ ]}.
