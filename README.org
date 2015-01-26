@@ -1,0 +1,48 @@
+#+TITLE: UE Node
+#+CATEGORY: SmallCells
+
+* UE
+
+** UE Capability Handling 
+   The UE Capability information is made up of the UE Radio Capability
+   information and the UE Core Network Capability information
+*** UE Radio Capability Handling 
+   - MME stores the UE Capability information during ECM-IDLE state
+   - send its most up to date UE Radio Capability information to the
+     E-UTRAN in the S1 interface INITIAL CONTEXT SETUP REQUEST message
+     unless the UE is performing an Attach procedure or a Tracking
+     Area Update procedure
+*** UE Core Network Capability
+    - UE Network Capability IE (mostly for E-UTRAN access related core network parameters)
+    - Network Capability IE (mostly for UTRAN/GERAN access related core network parameters)
+*** UE Specific DRX Parameter handling 
+    - Details are specified in TS 36.304
+** Warning message delivery procedure
+** Configuration Transfer procedure / RAN Information Management (RIM)
+   - exchange the eNodeBs IP addresses in order to be able to use X2
+     interface between the eNodeBs for Self-Optimizeed Networks (SON),
+     as specified in TS 36.413
+   - The source RAN node sends a message to its MME including the
+     source and destination addresses. The MME uses the destination
+     address to route the message encapsulated in a GTP message to the
+     correct MME via the S10 interface (see TS 29.274)
+
+
+
+* org-config                                                        :ARCHIVE:
+#+STARTUP: content hidestars logdone
+#+TAGS: DOCS(d) CODING(c) TESTING(t) PLANING(p)
+#+LINK_UP: sitemap.html
+#+LINK_HOME: main.html
+#+COMMENT: toc:nil
+#+OPTIONS: ^:nil
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:nil -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+DESCRIPTION: Augment design process with system property discovering aid.
+#+KEYWORDS: SmallCell,
+#+LANGUAGE: en
+#+PROPERTY: Effort_ALL  1:00 2:00 4:00 6:00 8:00 12:00
+#+COLUMNS: %38ITEM(Details) %TAGS(Context) %7TODO(To Do) %5Effort(Time){:} %6CLOCKSUM{Total}
+
+#+STYLE: <link rel="stylesheet" type="text/css" href="org-manual.css" />
+
