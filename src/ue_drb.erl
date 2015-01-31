@@ -20,8 +20,8 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-start_link(LCID) ->
-    Id = list_to_atom("DRB_" ++ integer_to_list(LCID)),
+start_link(LCID) when LCID >= 0, LCID < 10 ->
+    Id = list_to_atom("UE_DRB_" ++ integer_to_list(LCID)),
     gen_server:start_link({local, Id}, ?MODULE, [LCID], []).
 
 %% ------------------------------------------------------------------
