@@ -40,13 +40,37 @@ init([UeId]) ->
            supervisor,                              % Type     = worker | supervisor
            []                                       % Modules  = [Module] | dynamic
        },
-       %% RRC FSM instance
-       {   ue_rrc,                          % Id       = internal id
-           {ue_rrc,start_link,[UeId]}, % StartFun = {M, F, A}
+       %% Ue Logic
+       {   ue_logic,                          % Id       = internal id
+           {ue_logic,start_link,[UeId]}, % StartFun = {M, F, A}
            permanent,                               % Restart  = permanent | transient | temporary
            2000,                                    % Shutdown = brutal_kill | int() >= 0 | infinity
            worker,                                  % Type     = worker | supervisor
-           [ue_rrc]                           % Modules  = [Module] | dynamic
+           [ue_logic]                           % Modules  = [Module] | dynamic
+       },
+       %% RRC FSM instance
+       {   ue_rrc_fsm,                          % Id       = internal id
+           {ue_rrc_fsm,start_link,[UeId]}, % StartFun = {M, F, A}
+           permanent,                               % Restart  = permanent | transient | temporary
+           2000,                                    % Shutdown = brutal_kill | int() >= 0 | infinity
+           worker,                                  % Type     = worker | supervisor
+           [ue_rrc_fsm]                           % Modules  = [Module] | dynamic
+       },
+       %% ECM FSM instance
+       {   ue_ecm_fsm,                          % Id       = internal id
+           {ue_ecm_fsm,start_link,[UeId]}, % StartFun = {M, F, A}
+           permanent,                               % Restart  = permanent | transient | temporary
+           2000,                                    % Shutdown = brutal_kill | int() >= 0 | infinity
+           worker,                                  % Type     = worker | supervisor
+           [ue_ecm_fsm]                           % Modules  = [Module] | dynamic
+       },
+       %% EMM FSM instance
+       {   ue_emm_fsm,                          % Id       = internal id
+           {ue_emm_fsm,start_link,[UeId]}, % StartFun = {M, F, A}
+           permanent,                               % Restart  = permanent | transient | temporary
+           2000,                                    % Shutdown = brutal_kill | int() >= 0 | infinity
+           worker,                                  % Type     = worker | supervisor
+           [ue_emm_fsm]                           % Modules  = [Module] | dynamic
        }
       ]
      }
