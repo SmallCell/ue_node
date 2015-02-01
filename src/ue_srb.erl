@@ -11,7 +11,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/1, send/2]).
+-export([start_link/2, send/2]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -26,17 +26,19 @@
 
 
 -record(state, {
+          ueid  :: non_neg_integer(),
+          rnti  :: non_neg_integer(),
+          rb   :: non_neg_integer(),
           socket :: gen_udp:sctp_socket(),       % Listening socket
-          port   :: inet:port(),
-          rb   :: non_neg_integer()       % FSM handling module
+          enb_port   :: inet:port()
          }).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
-start_link(RB) when RB >= 0, RB < 4 ->
+start_link(UeId, RB) when RB >= 0, RB < 4 ->
     Id = list_to_atom("ue_srb_" ++ integer_to_list(RB)),
-    gen_server:start_link({local, Id}, ?MODULE, [RB], []).
+    gen_server:start_link({local, Id}, ?MODULE, [UeId, RB], []).
 
 send(Ch, Data) ->
     gen_server:cast(Ch, {send, Data}).
@@ -45,17 +47,18 @@ send(Ch, Data) ->
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init([RB]) ->
+init([UeId, RB]) ->
     %%W/O process_flag(trap_exit, true),
     ?INFO("UE Allocate SRB~p", [RB]),
     Opts = [{active, once}, {mode, binary}],
-    UePort = ?SIB_PORT_BASE + RB,
-    case gen_udp:open(0, Opts) of
+    Rnti = random:uniform(100),
+    UePort = ?SIB_PORT_BASE + 100 * UeId + Rnti,
+    EnbPort = ?SIB_PORT_BASE + RB,
+    case gen_udp:open(UePort, Opts) of
         {ok, Socket} ->
             ok = gen_udp:controlling_process(Socket, self()),
-            {ok, #state{socket=Socket,
-                        port = UePort,
-                        rb=RB}};
+            {ok, #state{ueid=UeId,rnti=Rnti,rb=RB,
+                    socket=Socket,enb_port = EnbPort}};
         {error, Reason} ->
             {stop, Reason}               
     end.
@@ -64,7 +67,7 @@ handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
 
-handle_cast({send, Data}, State=#state{socket=S,port=P}) ->
+handle_cast({send, Data}, State=#state{socket=S,enb_port=P}) ->
     gen_udp:send(S, ?ENB_HOST, P, Data),
     {noreply, State};
 

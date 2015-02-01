@@ -21,7 +21,7 @@
 %% ===================================================================
 
 start(_StartType, _StartArgs) ->
-    ue_node_sup:start_link(0).                  %FIXME: single UE
+    ue_group_sup:start_link().                  %FIXME: single UE
 
 stop(_State) ->
     ok.

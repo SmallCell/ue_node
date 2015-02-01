@@ -19,7 +19,7 @@
 %% ===================================================================
 
 start_link(UeId) ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, [UeId]).
+    supervisor:start_link({local, name(?MODULE,UeId)}, ?MODULE, [UeId]).
 
 %% ===================================================================
 %% Supervisor callbacks
@@ -32,25 +32,17 @@ init([UeId]) ->
     {ok,
      {{one_for_one, ?MAX_RESTART, ?MAX_TIME},
       [
-       %% Logical SRB CH supervisor
-       {   ue_srb_sup,
-           {ue_srb_sup,start_link, []},
+       %% Logical Channel supervisor
+       {   ue_ch_sup,
+           {ue_ch_sup,start_link, [UeId]},
            permanent,                               % Restart  = permanent | transient | temporary
            infinity,                                % Shutdown = brutal_kill | int() >= 0 | infinity
            supervisor,                              % Type     = worker | supervisor
            []                                       % Modules  = [Module] | dynamic
        },
-       %% Logical DRB CH supervisor
-       {   ue_drb_sup,
-           {ue_drb_sup,start_link, []},
-           permanent,                               % Restart  = permanent | transient | temporary
-           infinity,                                % Shutdown = brutal_kill | int() >= 0 | infinity
-           supervisor,                              % Type     = worker | supervisor
-           []                                       % Modules  = [Module] | dynamic
-       },
-       %% RRC instance
+       %% RRC FSM instance
        {   ue_rrc,                          % Id       = internal id
-           {ue_rrc,start_link,[]}, % StartFun = {M, F, A}
+           {ue_rrc,start_link,[UeId]}, % StartFun = {M, F, A}
            permanent,                               % Restart  = permanent | transient | temporary
            2000,                                    % Shutdown = brutal_kill | int() >= 0 | infinity
            worker,                                  % Type     = worker | supervisor
@@ -59,3 +51,10 @@ init([UeId]) ->
       ]
      }
     }.
+
+%%------------------------------------------------------------------------------
+%% Local helpers
+%%------------------------------------------------------------------------------
+
+name(Module, Rb) ->
+    list_to_atom(atom_to_list(Module) ++ "_" ++ integer_to_list(Rb)).

@@ -6,7 +6,7 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/0]).
+-export([start_link/1]).
 
 %% ------------------------------------------------------------------
 %% gen_fsm Function Exports
@@ -20,14 +20,15 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
-start_link() ->
-    gen_fsm:start_link({local, ?SERVER}, ?MODULE, [], []).
+start_link(UeId) ->
+    gen_fsm:start_link({local, ?SERVER}, ?MODULE, [UeId], []).
 
 %% ------------------------------------------------------------------
 %% gen_fsm Function Definitions
 %% ------------------------------------------------------------------
 
-init(_Args) ->
+init([UeId]) ->
+    ue_node:register(UeId, ue_rrc, self()),
     {ok, initial_state_name, initial_state}.
 
 state_name(_Event, State) ->
