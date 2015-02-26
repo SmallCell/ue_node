@@ -4,7 +4,7 @@
 
 %% API
 -export([start_link/1, 
-         start_srb_handler/2, 
+         start_srb_handler/3, 
          stop_srb_handler/1, 
          start_drb_handler/2, 
          stop_drb_handler/1]).
@@ -20,10 +20,10 @@
 %% ===================================================================
 %% API functions
 %% ===================================================================
-start_srb_handler(UeId,RB) ->
+start_srb_handler(UeId,RB,Owner) ->
     supervisor:start_child (?MODULE,
                             {name("srb", RB),           % Id  = internal id
-                             {ue_srb,start_link,[UeId, RB]}, % StartFun = {M, F, A}
+                             {ue_srb,start_link,[UeId, RB, Owner]}, % StartFun = {M, F, A}
                              temporary,       % Restart  = permanent | transient | temporary
                              2000,            % Shutdown = brutal_kill | int() >= 0 | infinity
                              worker,          % Type     = worker | supervisor

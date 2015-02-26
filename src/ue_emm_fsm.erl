@@ -7,7 +7,8 @@
 %% ------------------------------------------------------------------
 
 -export([start_link/1,
-         attach/2
+         attach/2,
+         detach/2
         ]).
 
 %% ------------------------------------------------------------------
@@ -36,6 +37,9 @@
 %% ------------------------------------------------------------------
 
 attach(Pid, EnbId) when is_pid(Pid), is_integer(EnbId) ->
+    gen_fsm:send_event(Pid, {attach, EnbId}).
+
+detach(Pid, EnbId) when is_pid(Pid), is_integer(EnbId) ->
     gen_fsm:send_event(Pid, {attach, EnbId}).
 
 start_link(UeId) ->

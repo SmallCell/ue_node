@@ -34,7 +34,7 @@ init([UeId]) ->
       [
        %% Logical Channel supervisor
        {   ue_ch_sup,
-           {ue_ch_sup,start_link, [UeId]},
+           {ue_ch_sup,start_link, [UeId]}, %FIXME: cleanup need for UeId
            permanent,                               % Restart  = permanent | transient | temporary
            infinity,                                % Shutdown = brutal_kill | int() >= 0 | infinity
            supervisor,                              % Type     = worker | supervisor

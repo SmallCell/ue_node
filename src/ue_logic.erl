@@ -7,7 +7,9 @@
 %% ------------------------------------------------------------------
 
 -export([start_link/1,
-         attach/2
+         emm_attach/2,
+         rrc_connect/2,
+         emc_connect/2
         ]).
 
 %% ------------------------------------------------------------------
@@ -26,10 +28,17 @@
 %% API Function Definitions
 %% ------------------------------------------------------------------
 
--spec attach(integer(), integer()) -> any().
-attach(UeId, EnbId) ->
-    gen_server:cast(ue_node:lookup(UeId, ue_logic),
-                    {attach, EnbId}).
+-spec emm_attach(integer(), integer()) -> any().
+emm_attach(UeId, EnbId) ->
+    gen_server:call(ue_node:lookup(UeId, ue_logic), {emm_attach, EnbId}).
+
+-spec rrc_connect(integer(), integer()) -> any().
+rrc_connect(UeId, EnbId) ->
+    gen_server:call(ue_node:lookup(UeId, ue_logic), {rrc_connect, EnbId}).
+
+-spec emc_connect(integer(), integer()) -> any().
+emc_connect(UeId, EnbId) ->
+    gen_server:call(ue_node:lookup(UeId, ue_logic), {emc_connect, EnbId}).
 
 
 -spec start_link(non_neg_integer()) -> {ok, pid()} |
@@ -45,13 +54,21 @@ init([UeId]) ->
     ue_node:register(UeId, ue_logic, self()),
     {ok, #state{ue_id=UeId}}.
 
+handle_call({rrc_connect, EnbId},  _From, #state{ue_id=UeId} = State) ->
+    Pid = ue_node:lookup(UeId, ue_rrc_fsm),
+    {ok, NASMessage, ESMMessage} = ue_rrc_fsm:connect(Pid, EnbId),
+    {reply, {ok, NASMessage, ESMMessage}, State}; % FIXME: update state with parameters
+handle_call({emc_connect, EnbId},  _From, #state{ue_id=UeId} = State) ->
+    Pid = ue_node:lookup(UeId, ue_emc_fsm),
+    {ok, NASMessage, ESMMessage} = ue_rrc_fsm:connect(Pid, EnbId),
+    {reply, {ok, NASMessage, ESMMessage}, State}; % FIXME: update state with parameters
+handle_call({mme_attach, EnbId},  _From, #state{ue_id=UeId} = State) ->
+    Pid = ue_node:lookup(UeId, ue_emm_fsm),
+    {ok, IP} = ue_emm_fsm:attach(Pid, EnbId),
+    {reply, {ok, IP}, State}; % FIXME: update state with parameters
 handle_call(_Request, _From, State) ->
     {reply, ok, State}.
 
-handle_cast({attach, EnbId}, #state{ue_id=UeId} = State) ->
-    EMM = ue_node:lookup(UeId, ue_emm_fsm),
-    ue_emm_fsm:attach(EMM, EnbId),
-    {noreply, State};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 

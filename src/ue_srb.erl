@@ -11,7 +11,9 @@
 %% API Function Exports
 %% ------------------------------------------------------------------
 
--export([start_link/2, send/2]).
+-export([start_link/3, 
+         send/3
+        ]).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Exports
@@ -27,48 +29,57 @@
 
 -record(state, {
           ueid  :: non_neg_integer(),
-          rnti  :: non_neg_integer(),
+          owner :: pid(),
           rb   :: non_neg_integer(),
-          socket :: gen_udp:sctp_socket(),       % Listening socket
-          enb_port   :: inet:port()
+          socket :: gen_udp:sctp_socket()       % Listening socket
          }).
 
 %% ------------------------------------------------------------------
 %% API Function Definitions
 %% ------------------------------------------------------------------
-start_link(UeId, RB) when RB >= 0, RB < 4 ->
+-spec start_link(integer(), integer(), pid()) -> {ok, pid()} |
+                                                 ignore |
+                                                 {error, term()}.
+start_link(RB, UeId, Owner) when RB >= 0, RB < 4 ->
     Id = list_to_atom("ue_srb_" ++ integer_to_list(RB)),
-    gen_server:start_link({local, Id}, ?MODULE, [UeId, RB], []).
+    gen_server:start_link({local, Id}, ?MODULE, [UeId, RB, Owner], []).
 
-send(Ch, Data) ->
-    gen_server:cast(Ch, {send, Data}).
+-spec send(integer(), integer(), binary()) -> any().
+send(Pid, EnbId, Data) when is_pid(Pid), is_number(EnbId)->
+    gen_server:cast(Pid, {send, EnbId, Data}).
 
 %% ------------------------------------------------------------------
 %% gen_server Function Definitions
 %% ------------------------------------------------------------------
 
-init([UeId, RB]) ->
+init([UeId, RB, Owner]) ->
     %%W/O process_flag(trap_exit, true),
-    ?INFO("UE Allocate SRB~p", [RB]),
+    UePort = ?SIB_PORT_BASE + 100 * UeId + RB,
+    ?INFO("UE ~p Allocate SRB ~p on port: ~p", [UeId,RB,UePort]),
     Opts = [{active, once}, {mode, binary}],
-    Rnti = random:uniform(100),
-    UePort = ?SIB_PORT_BASE + 100 * UeId + Rnti,
-    EnbPort = ?SIB_PORT_BASE + RB,
     case gen_udp:open(UePort, Opts) of
         {ok, Socket} ->
             ok = gen_udp:controlling_process(Socket, self()),
-            {ok, #state{ueid=UeId,rnti=Rnti,rb=RB,
-                    socket=Socket,enb_port = EnbPort}};
+            {ok, #state{ueid=UeId,owner=Owner,rb=RB,
+                        socket=Socket}};
         {error, Reason} ->
             {stop, Reason}               
     end.
 
-handle_call(_Request, _From, State) ->
+
+%% handle_call({set_data_hnd, _Pid}, _From, State) ->
+%%     io:format(user, ">> state ~p", [State]),
+%%     {reply, {error, already_handled}, State};
+
+% fall trough
+handle_call(Request, _From, State) ->
+    ?ERROR(">> ue_srb_ ~p, unknown req: ~p", [self(), Request]),
     {reply, ok, State}.
 
-
-handle_cast({send, Data}, State=#state{socket=S,enb_port=P}) ->
-    gen_udp:send(S, ?ENB_HOST, P, Data),
+handle_cast({send, _EnbId, Data}, State=#state{socket=S,rb=RB}) ->
+    EnbPort = ?SIB_PORT_BASE + RB,
+    ?INFO(">> UE sending on: ~p",[EnbPort]),
+    gen_udp:send(S, ?ENB_HOST, EnbPort, Data),
     {noreply, State};
 
 handle_cast(Msg, State) ->
